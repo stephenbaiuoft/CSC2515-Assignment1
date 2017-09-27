@@ -2,7 +2,6 @@ from sklearn import datasets
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 def load_data():
     boston = datasets.load_boston()
     X = boston.data
@@ -19,6 +18,8 @@ def visualize(X, y, features):
     for i in range(feature_count):
         plt.subplot(3, 5, i + 1)
         # TODO: Plot feature i against y
+        # ith row meaning the ith feature
+        plt.plot(X[:,i])
 
     plt.tight_layout()
     plt.show()
@@ -27,7 +28,15 @@ def visualize(X, y, features):
 def fit_regression(X, Y):
     # TODO: implement linear regression
     # Remember to use np.linalg.solve instead of inverting!
-    raise NotImplementedError()
+
+    # Mark one or zero?
+    bias = np.zeros(shape=(X.shape[0],1))
+    NX = np.append(X, bias, 1)
+
+    w = np.linalg.solve(NX, Y)
+    return w
+
+    # raise NotImplementedError()
 
 
 def main():
@@ -40,8 +49,18 @@ def main():
 
     # TODO: Split data into train and test
 
+    np.random.seed(42)
+    np.random.permutation(X)
+    ratio = int( X.shape[0]*0.8)
+    trainData = X[ratio:,:]
+    testData = X[0:ratio,:]
+
+    # same seed for y
+    np.random.seed(42)
+    np.random.permutation(y)
+
     # Fit regression model
-    w = fit_regression(X, y)
+    w = fit_regression(trainData, y[:ratio])
 
     # Compute fitted values, MSE, etc.
 
