@@ -25,15 +25,22 @@ def visualize(X, y, features):
     plt.show()
 
 
-def fit_regression(X, Y):
+def fit_regression(X, y):
     # TODO: implement linear regression
     # Remember to use np.linalg.solve instead of inverting!
+    # Meaning to solve for (XTX)-1 using np.linalg.solve(XTX, I)
 
-    # Mark one or zero?
-    bias = np.zeros(shape=(X.shape[0],1))
-    NX = np.append(X, bias, 1)
+    # w* = (XTX)-1 XTy
+    # add bias by appending 1
+    bias = np.ones(shape=(X.shape[0],1))
+    X_bias = np.append(bias, X, axis=1)
 
-    w = np.linalg.solve(NX, Y)
+    X_tranpose = np.transpose(X_bias)
+    XTX = np.dot(X_tranpose, X_bias)
+    XTX_I = np.linalg.solve(XTX, np.identity(X.shape[1]+1))
+
+    w = np.dot(np.dot(XTX_I, X_tranpose), y)
+    print(w)
     return w
 
     # raise NotImplementedError()
@@ -45,22 +52,22 @@ def main():
     print("Features: {}".format(features))
 
     # Visualize the features
-    visualize(X, y, features)
+    # visualize(X, y, features)
 
     # TODO: Split data into train and test
 
     np.random.seed(42)
     np.random.permutation(X)
     ratio = int( X.shape[0]*0.8)
-    trainData = X[ratio:,:]
-    testData = X[0:ratio,:]
+    trainData = X[0:ratio,:]
+    testData = X[ratio:,:]
 
     # same seed for y
     np.random.seed(42)
     np.random.permutation(y)
 
     # Fit regression model
-    w = fit_regression(trainData, y[:ratio])
+    w = fit_regression(trainData, y[0:ratio])
 
     # Compute fitted values, MSE, etc.
 
