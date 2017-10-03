@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.datasets import load_boston
 
+# part 1 gives the analytical solution to w*
+# (XTAX + lamda*I )-1 XTAy
+
 np.random.seed(0)
 
 # load boston housing prices dataset
@@ -54,7 +57,7 @@ def run_on_fold(x_test, y_test, x_train, y_train, taus):
     return losses
 
 
-# to implement
+# to implement local reweighted least square ==> computer A?
 def LRLS(test_datum, x_train, y_train, tau, lam=1e-5):
     '''
     Input: test_datum is a dx1 test vector
@@ -65,6 +68,16 @@ def LRLS(test_datum, x_train, y_train, tau, lam=1e-5):
     output is y_hat the prediction on test_datum
     '''
     ## TODO
+    dist = l2(x_train, test_datum)
+    exp = np.exp( -dist/ (2*tau*tau))
+    sumExp = np.sum(exp)
+
+    # exp is nx1, n is # of trainData
+    Avector = exp/sumExp
+    A = Avector * np.identity(Avector.shape[0])
+
+    XT = np.transpose(x_train)
+
     return None
     ## TODO
 
@@ -81,10 +94,18 @@ def run_k_fold(x, y, taus, k):
     return None
     ## TODO
 
+def test():
+    A = np.array([[1],[3],[5]])
+    B = np.array([[10]])
+    l2(A,B)
 
 if __name__ == "__main__":
-    # In this excersice we fixed lambda (hard coded to 1e-5) and only set tau value. Feel free to play with lambda as well if you wish
-    taus = np.logspace(1.0, 3, 200)
-    losses = run_k_fold(x, y, taus, k=5)
-    plt.plot(losses)
-    print("min loss = {}".format(losses.min()))
+    # In this excersice we fixed lambda (hard coded to 1e-5) and only set tau value.
+    #  Feel free to play with lambda as well if you wish
+
+    test()
+
+    # taus = np.logspace(1.0, 3, 200)
+    # losses = run_k_fold(x, y, taus, k=5)
+    # plt.plot(losses)
+    # print("min loss = {}".format(losses.min()))
