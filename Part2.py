@@ -7,6 +7,7 @@ from __future__ import print_function
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.datasets import load_boston
+import scipy
 
 # part 1 gives the analytical solution to w*
 # (XTAX + lamda*I )-1 XTAy
@@ -50,14 +51,16 @@ def run_on_fold(x_test, y_test, x_train, y_train, taus):
     '''
     N_test = x_test.shape[0]
     losses = np.zeros(taus.shape)
-    for j, tau in enumerate(taus):
-        predictions = np.array([LRLS(x_test[i, :].reshape(1, d), x_train, y_train, tau) \
-                                for i in range(N_test)])
-        losses[j] = ((predictions - y_test) ** 2).mean()
+    for j,tau in enumerate(taus):
+        #print("j is {}".format(j))
+        predictions =  np.array([    LRLS(x_test[i, :].reshape(d,1),x_train,y_train, tau) \
+                        for i in range(N_test)    ])
+
+        #
+        losses[j] = ((predictions.flatten()-y_test.flatten())**2).mean()
     return losses
 
 
-# to implement local reweighted least square ==> computer A?
 def LRLS(test_datum, x_train, y_train, tau, lam=1e-5):
     '''
     Input: test_datum is a dx1 test vector
@@ -67,19 +70,30 @@ def LRLS(test_datum, x_train, y_train, tau, lam=1e-5):
            lam is the regularization parameter
     output is y_hat the prediction on test_datum
     '''
-    ## TODO
-    dist = l2(x_train, test_datum)
-    exp = np.exp( -dist/ (2*tau*tau))
-    sumExp = np.sum(exp)
 
-    # exp is nx1, n is # of trainData
-    Avector = exp/sumExp
+    #test_datum.reshape(test_datum.shape[0], 1)
+    test_datumL = test_datum.reshape(1, test_datum.shape[0])
+    #print( "test_datumL shape is {}".format(test_datumL.shape))
+    dist = l2(x_train, test_datumL)
+    logexpSum = scipy.misc.logsumexp(-dist/(2*tau*tau))
+    expSum = np.exp(logexpSum)
+    exp = np.exp(- dist/ (2*tau*tau))
+
+    Avector = exp/expSum
+
     A = Avector * np.identity(Avector.shape[0])
 
     XT = np.transpose(x_train)
+    XTAy = XT.dot(A).dot(y_train)
+    left1 = XT.dot(A).dot(x_train)
+    left2 = lam * np.identity(XT.shape[0])
+    left = left1 + left2
 
-    return None
-    ## TODO
+    # this is the optimal weight matrix
+    w = np.linalg.solve(left, XTAy)
+    #print("w is {}".format(w))
+    y_hat = np.transpose(w).dot(test_datum)
+    return y_hat
 
 
 def run_k_fold(x, y, taus, k):
@@ -89,10 +103,43 @@ def run_k_fold(x, y, taus, k):
            taus is a vector of tau values to evaluate
            K in the number of folds
     output is losses a vector of k-fold cross validation losses one for each tau value
+    is ? tau d x k?????
     '''
+
+    partition = int(N/k)
+    for i in range(k):
+        test_index = idx[i * partition:(i+1)*partition]
+        train_index = np.setdiff1d(idx, test_index)
+        x_test, y_test = x[test_index], y[test_index]
+        x_train, y_train = x[train_index], y[train_index]
+        print("i is {}".format(i))
+        run_on_fold(x_test, y_test, x_train, y_train, taus)
+
+
+    losses = np.array([  k_fold_helper(k, i, taus)
+                          for i in range(k)])
+
+    # should be k by 200? # of tau iteration
+    print("losses shape is {}".format(losses.shape))
+    # partition = int(N/k)
+    # for i in np.arange(k):
+
+
+    return losses
     ## TODO
-    return None
-    ## TODO
+
+def k_fold_helper(k, i, taus):
+    # x_test, y_test, x_train, y_train, taus
+    partition = int(N/k)
+
+    test_index = idx[i * partition:(i + 1) * partition]
+    train_index = np.setdiff1d(idx, test_index)
+    x_test, y_test = x[test_index], y[test_index]
+    x_train, y_train = x[train_index], y[train_index]
+
+    return run_on_fold(x_test, y_test, x_train, y_train, taus)
+
+
 
 def test():
     A = np.array([[1],[3],[5]])
@@ -103,9 +150,8 @@ if __name__ == "__main__":
     # In this excersice we fixed lambda (hard coded to 1e-5) and only set tau value.
     #  Feel free to play with lambda as well if you wish
 
-    test()
-
-    # taus = np.logspace(1.0, 3, 200)
-    # losses = run_k_fold(x, y, taus, k=5)
-    # plt.plot(losses)
-    # print("min loss = {}".format(losses.min()))
+    # change to to 200 later
+    taus = np.logspace(1.0, 3, 10)
+    losses = run_k_fold(x, y, taus, k=5)
+    plt.plot(losses)
+    print("min loss = {}".format(losses.min()))
