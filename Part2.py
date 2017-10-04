@@ -80,6 +80,9 @@ def LRLS(test_datum, x_train, y_train, tau, lam=1e-5):
     exp = np.exp(- dist/ (2*tau*tau))
 
     Avector = exp/expSum
+    #
+    # check = np.sum(Avector)
+    # print("check should be 1: ==? {}".format(check))
 
     A = Avector * np.identity(Avector.shape[0])
 
@@ -107,26 +110,26 @@ def run_k_fold(x, y, taus, k):
     '''
 
     partition = int(N/k)
-    for i in range(k):
-        test_index = idx[i * partition:(i+1)*partition]
-        train_index = np.setdiff1d(idx, test_index)
-        x_test, y_test = x[test_index], y[test_index]
-        x_train, y_train = x[train_index], y[train_index]
-        print("i is {}".format(i))
-        run_on_fold(x_test, y_test, x_train, y_train, taus)
+    # for i in range(k):
+    #     test_index = idx[i * partition:(i+1)*partition]
+    #     train_index = np.setdiff1d(idx, test_index)
+    #     x_test, y_test = x[test_index], y[test_index]
+    #     x_train, y_train = x[train_index], y[train_index]
+    #     print("i is {}".format(i))
+    #     run_on_fold(x_test, y_test, x_train, y_train, taus)
 
 
-    losses = np.array([  k_fold_helper(k, i, taus)
+    lossMatrix = np.array([  k_fold_helper(k, i, taus)
                           for i in range(k)])
 
     # should be k by 200? # of tau iteration
-    print("losses shape is {}".format(losses.shape))
-    # partition = int(N/k)
-    # for i in np.arange(k):
+    print("lossMatrix shape is {}".format(lossMatrix.shape))
 
-
+    # average over same tau
+    losses = np.mean(lossMatrix, axis = 0)
+    print("losses(after averaging) shape is {}".format(losses.shape))
     return losses
-    ## TODO
+
 
 def k_fold_helper(k, i, taus):
     # x_test, y_test, x_train, y_train, taus
@@ -143,15 +146,18 @@ def k_fold_helper(k, i, taus):
 
 def test():
     A = np.array([[1],[3],[5]])
-    B = np.array([[10]])
-    l2(A,B)
+    plt.plot(A)
 
 if __name__ == "__main__":
     # In this excersice we fixed lambda (hard coded to 1e-5) and only set tau value.
     #  Feel free to play with lambda as well if you wish
 
+    # test()
     # change to to 200 later
-    taus = np.logspace(1.0, 3, 10)
+    taus = np.logspace(1.0, 3, 200)
     losses = run_k_fold(x, y, taus, k=5)
+
     plt.plot(losses)
+    plt.show()
+
     print("min loss = {}".format(losses.min()))
