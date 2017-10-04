@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.datasets import load_boston
+import matplotlib.pyplot as plt
 
 BATCHES = 50
 
@@ -74,24 +75,117 @@ def cosine_similarity(vec1, vec2):
 
     return dot / (sum1 * sum2)
 
+# helper function
+def l2(A, B):
+    '''
+    Input: A is a Nxd matrix
+           B is a Mxd matirx
+    Output: dist is a NxM matrix where dist[i,j] is the square norm between A[i,:] and B[j,:]
+    i.e. dist[i,j] = ||A[i,:]-B[j,:]||^2
+    '''
+    A_norm = (A ** 2).sum(axis=1).reshape(A.shape[0], 1)
+    B_norm = (B ** 2).sum(axis=1).reshape(1, B.shape[0])
+    dist = A_norm + B_norm - 2 * A.dot(B.transpose())
+    return dist
+
 
 # TODO: implement linear regression gradient
 def lin_reg_gradient(X, y, w):
     '''
     Compute gradient of linear regression model parameterized by w
     '''
-    raise NotImplementedError()
+    XT = np.transpose(X)
+    n = X.shape[0]
+    gradient  = ( 2/n )*(XT.dot(X).dot(w) - XT.dot(y))
+    # should be # of features x 1
+    return gradient
 
 
-def main():
-    # Load data and randomly initialise weights
-    X, y, w = load_data_and_init_params()
+# return average gradient for k iterations
+# then average
+def k_batch( X, y, w, k):
+
     # Create a batch sampler to generate random batches from data
     batch_sampler = BatchSampler(X, y, BATCHES)
 
-    # Example usage
+    gradientMatrix = np.array( [
+        get_batch(batch_sampler, w) for i in range(k)
+    ] )
+
+    print("gradientMatrix shape should be: k x # of features? {0}".format (gradientMatrix.shape))
+
+    # average over k times
+    k_average_batch_gradient = gradientMatrix.mean(axis = 0)
+    print("k_average_batch_gradient shape should be: # of features {0}".format(k_average_batch_gradient.shape))
+
+    return k_average_batch_gradient
+
+
+# return batch_grad for 1 batch
+def get_batch(batch_sampler, w):
     X_b, y_b = batch_sampler.get_batch()
     batch_grad = lin_reg_gradient(X_b, y_b, w)
+    return batch_grad
+
+
+# given m batch,
+# compute k times, each time the weight vector
+# k x 13 matrix
+def km_batch_variance( X, y, w, k, m):
+    # Create a batch sampler to generate random batches from data
+    batch_sampler = BatchSampler(X, y, m)
+
+    gradientMatrix = np.array( [
+        get_batch(batch_sampler, w) for i in range(k)
+    ] )
+
+
+    #print("gradientMatrix shape should be: k x # of features? {0}".format (gradientMatrix.shape))
+    T = gradientMatrix.transpose()
+
+    weight_var = T.var( axis =  1)
+    #print("weight_var shape should be: 13, each representing variances? {0}".format(weight_var.shape))
+    return weight_var
+
+# this is code for question 3.5, displaying the necessary data
+def part35():
+    X, y, w = load_data_and_init_params()
+    # Load data and randomly initialise weights
+    kmean_gradient = k_batch(X, y, w, k = 500 )
+
+    true_gradient = lin_reg_gradient(X, y, w)
+
+    print("kmean_gradient is: {}, \n\ntrue_gradient is: {}".format(kmean_gradient, true_gradient))
+    print("kmean_gradient shape is: {}, true_gradient shape is: {}".format(kmean_gradient.shape, true_gradient.shape))
+    distance = l2( true_gradient.reshape(1,13),  kmean_gradient.reshape(1, 13))
+    cos_similarity = cosine_similarity(true_gradient, kmean_gradient)
+
+    print("distance is {0}\ncos_similarity is {1}".format( distance, cos_similarity ))
+
+
+# this is code for question 3.6, displaying the plot
+def part36():
+    X, y, w = load_data_and_init_params()
+
+    weight_varianceMatrix = np.array([
+        km_batch_variance(X, y, w, 500, m) for m in np.arange(1,401)
+    ])
+
+    # weight_sigmaMatrix is 401 x 13 matrix, with jth column representing a particular jth signma
+    weight_logvarM = np.log(weight_varianceMatrix)
+
+    # plot first weight sigma against logm
+    plt.plot(np.log(np.arange(1,401)), weight_logvarM[:,5], 'b--')
+    plt.ylabel("log variance")
+    plt.xlabel("log m, for m in [1:400]")
+    plt.title("log variance vs log m, for j = 5")
+    plt.show()
+
+def main():
+    #part35()
+
+    part36()
+
 
 
 if __name__ == '__main__':

@@ -148,16 +148,22 @@ def test():
     A = np.array([[1],[3],[5]])
     plt.plot(A)
 
+def part23():
+    taus = np.logspace(1.0, 3, 200)
+    losses = run_k_fold(x, y, taus, k=5)
+
+    plt.plot(losses, 'b--')
+    plt.title("loss value vs different tau value, k = 5")
+    plt.xlabel("taus in logspace of [10:1000]")
+    plt.ylabel("k_fold loss for each tau ")
+    plt.show()
+    print("min loss = {}".format(losses.min()))
+
 if __name__ == "__main__":
     # In this excersice we fixed lambda (hard coded to 1e-5) and only set tau value.
     #  Feel free to play with lambda as well if you wish
 
     # test()
     # change to to 200 later
-    taus = np.logspace(1.0, 3, 200)
-    losses = run_k_fold(x, y, taus, k=5)
 
-    plt.plot(losses)
-    plt.show()
-
-    print("min loss = {}".format(losses.min()))
+    part23()
