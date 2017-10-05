@@ -144,8 +144,41 @@ def km_batch_variance( X, y, w, k, m):
     T = gradientMatrix.transpose()
 
     weight_var = T.var( axis =  1)
-    #print("weight_var shape should be: 13, each representing variances? {0}".format(weight_var.shape))
-    return weight_var
+    # print("weight_var shape should be: 13, each representing variances? "
+    #       "{0}\n\n\n{1}".format(weight_var.shape, weight_var))
+
+    weight_var_cus = compute_variance(T)
+
+    # if weight_var_cus.all() == weight_var.all():
+    #     print("weight_matrix python and custom written equal")
+
+    return weight_var_cus
+
+# compute the variance of a matrix, treating each row
+# as a set of data
+def compute_variance( matrix ):
+    # take shape = (d,1) vector? and computes variance
+    def computer_variance_vector( vector ):
+        u = np.mean(vector)
+        # variance definition:
+        # sum over (xi - u )^2, dividied by
+
+        variance =  np.sum( (vector - u) ** 2 )/ vector.shape[0]
+        # varPython = np.var(vector)
+
+        # print("variance computed: {0}\n\nvariance by python {1}".format(variance, varPython))
+        # if variance == varPython :
+        #     print("equal!!")
+        #
+        # print("vector shape is {0}\n\nvariance is{1}".format( vector.shape, variance))
+        return variance
+
+    variance_matrix = np.array([
+        computer_variance_vector(matrix[i]) for i in range(matrix.shape[0])
+    ])
+    # print("Custom variance matrix shape: {0}\n\n\n{1}".format( variance_matrix.shape, variance_matrix))
+
+    return variance_matrix
 
 # this is code for question 3.5, displaying the necessary data
 def part35():
@@ -165,6 +198,25 @@ def part35():
 
 # this is code for question 3.6, displaying the plot
 def part36():
+    # draw_all gets all the feature weight in a large subplot
+    def draw_all( weight_logvarM ):
+        plt.figure(figsize=(10, 12))
+        feature_count = weight_logvarM.shape[1]
+
+        log_m = np.log(np.arange(1,401))
+
+        # i: index
+        for j in range(feature_count):
+            plt.subplot(5, 3, j + 1)
+            # ith row meaning the ith feature
+            plt.plot(log_m, weight_logvarM[:, j], 'b--')
+            plt.ylabel("log variance")
+            plt.xlabel("log m, for m in [1:400]")
+            plt.title("{0}th log variance vs log m ".format(j + 1))
+
+        plt.tight_layout()
+        plt.show()
+
     X, y, w = load_data_and_init_params()
 
     weight_varianceMatrix = np.array([
@@ -174,15 +226,18 @@ def part36():
     # weight_sigmaMatrix is 401 x 13 matrix, with jth column representing a particular jth signma
     weight_logvarM = np.log(weight_varianceMatrix)
 
-    # plot first weight sigma against logm
-    plt.plot(np.log(np.arange(1,401)), weight_logvarM[:,5], 'b--')
-    plt.ylabel("log variance")
-    plt.xlabel("log m, for m in [1:400]")
-    plt.title("log variance vs log m, for j = 5")
-    plt.show()
+    # # plot first weight sigma against logm
+    # plt.plot(np.log(np.arange(1,401)), weight_logvarM[:,5], 'b--')
+    # plt.ylabel("log variance")
+    # plt.xlabel("log m, for m in [1:400]")
+    # plt.title("log variance vs log m, for j = 5")
+    # plt.show()
+
+    draw_all(weight_logvarM)
+
 
 def main():
-    #part35()
+    part35()
 
     part36()
 

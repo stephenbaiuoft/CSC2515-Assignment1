@@ -26,6 +26,17 @@ def visualize(X, y, features):
     plt.show()
 
 
+def cosine_similarity(vec1, vec2):
+    '''
+    Compute the cosine similarity (cos theta) between two vectors.
+    '''
+    dot = np.dot(vec1, vec2)
+    sum1 = np.sqrt(np.dot(vec1, vec1))
+    sum2 = np.sqrt(np.dot(vec2, vec2))
+
+    return dot / (sum1 * sum2)
+
+
 def fit_regression(X, y):
     # TODO: implement linear regression
     # Remember to use np.linalg.solve instead of inverting!
@@ -69,10 +80,10 @@ def l1_calculate(w, X, y):
     bias = np.ones(shape=(X.shape[0],1))
     X_bias = np.append(bias, X, axis=1)
 
-    yExpected = np.dot(X_bias, w)
+    yPredicted = np.dot(X_bias, w)
     # y = np.array(y).reshape(y.shape[0], 1)
 
-    diff = np.fabs (y - yExpected)
+    diff = np.fabs (y - yPredicted)
     l1 = np.sum(diff)/X.shape[0]
     print("l1 loss is {}".format(l1))
     return l1
@@ -80,10 +91,10 @@ def l1_calculate(w, X, y):
 def r2_calculate(w, X, y):
     bias = np.ones(shape=(X.shape[0],1))
     X_bias = np.append(bias, X, axis=1)
-    yExpected = np.dot(X_bias, w)
+    yPredicted = np.dot(X_bias, w)
 
     # y = np.array(y).reshape(y.shape[0], 1)
-    sumOfSquare = np.dot( np.transpose(y - yExpected), y - yExpected)
+    sumOfSquare = np.dot( np.transpose(y - yPredicted), y - yPredicted)
     print("sumOfSquare is {}".format(sumOfSquare))
 
     yAverage = y.sum()/y.shape[0]
@@ -103,7 +114,7 @@ def main():
     print("Features: {}".format(features))
 
     # Visualize the features
-    # visualize(X, y, features)
+    visualize(X, y, features)
 
     # TODO: Split data into train and test
 
@@ -125,9 +136,14 @@ def main():
     mse = mse_calculate(w, testData, y[ratio:])
 
     l1 = l1_calculate(w, testData, y[ratio:])
-    # print("l1 loss is: ", l1)
+    print("l1 loss is: ", l1)
 
-    r2 = r2_calculate(w, testData, y[ratio:])
+    bias = np.ones(shape=(testData.shape[0],1))
+    test_bias = np.append(bias, testData, axis=1)
+    yPredicted = np.dot(test_bias, w)
+
+    cos_similarity = cosine_similarity( yPredicted, y[ratio:])
+    print("cos_similarity is{0}".format( cos_similarity) )
 
 if __name__ == "__main__":
     main()
